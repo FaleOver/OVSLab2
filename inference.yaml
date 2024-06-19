@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference
+  template:
+    metadata:
+      labels:
+        app: inference
+    spec:
+      containers:
+        - name: inference
+          image: faleover/ovs_lab2:inference-service
+          env:
+            - name: MODEL_PATH
+              value: "/models/pipeline.pkl"
+            - name: KEYCLOAK_URL
+              value: "https://keycloak-service:8443"
+            - name: CLIENT_ID
+              value: "inference-client"
+            - name: CLIENT_SECRET
+              value: "BYz7RsQFUxlmXrOdija5AQ6yGQhIGgEY"
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: /models
+              name: config-volume
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: models-config
+# Чтобы создать конфигмап, можно выполнить эту команду, она смонитрует из папки с образом инференса папку с моделями, чтоб была доступна в кластере
+# kubectl create configmap models-config --from-file=./models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8888
+      targetPort: 8000
+  selector:
+    app: inference
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-node-service
+spec:
+  selector:
+    app: inference
+  type: NodePort
+  ports:
+    - name: common-inf
+      port: 8888
+      targetPort: 8000
+      nodePort: 31223

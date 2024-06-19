@@ -1,0 +1,162 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+data:
+  password: bXlIYXJkUGFzczAwNw==
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15.2
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: pgdata
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keycloak-secret
+type: Opaque
+data:
+  password: YWRtaW4wMDc=
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keycloak-tls-secret
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURGekNDQWYrZ0F3SUJBZ0lVT2dyM3Y0OEpRYmtkWERtb2lHdHJhMUlYRW9jd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0d6RVpNQmNHQTFVRUF3d1FhMlY1WTJ4dllXc3RjMlZ5ZG1salpUQWVGdzB5TkRBMk1UUXlNRFEzTkRWYQpGdzB5TlRBMk1UUXlNRFEzTkRWYU1Cc3hHVEFYQmdOVkJBTU1FR3RsZVdOc2IyRnJMWE5sY25acFkyVXdnZ0VpCk1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRQzYxYno0RFoxemkxb2VtQkV2RXFKaW1wNEMKR3FnRmJhVkZyRGNhNFNEa0VseThxYVUzWWV4Z2ZKc09HR0s3dTkxY0JIRkYvNmRrdGlQaWZUNlBvci9vVkdOUwpvYlZqSElSQjBTRTIwdWtrczNLYTJBSnhydWxVWjJTL245YUJCYlcrUWRQRUU0YW93OFhndEdSMzFVWFBFRldWCml2V2Z6TVVnRklUdWpVK2xrVlNDbmgwR3c0L21aY3hRa1JwVHBDckdKUUN4ZDI3K0owQlpCRU9GZWxOWk8wcTYKNDhpRWFpSTZkNWNMTzZIZmxMdHlheXBWeDRRaWNmNEpQY1FQQk94YkhtSHBhbm94cUMvM1pmZTBhaHZUUE90VQp1dXFKYUM1V253ZlR3U1BEMUQ2TW02OVJkRDZhcGN3ZklVZnFFalB1VlhwRldQc2RWMngwdUJyOVk1SE5BZ01CCkFBR2pVekJSTUIwR0ExVWREZ1FXQkJUWjJEeGhWYkszMlhJakxrcmlVMHc3YjlHeXF6QWZCZ05WSFNNRUdEQVcKZ0JUWjJEeGhWYkszMlhJakxrcmlVMHc3YjlHeXF6QVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liMwpEUUVCQ3dVQUE0SUJBUUNGNTN5S1NuOHZKSVd3b0NuVnpwc1M1SVVlUXFaeHhReWFkZXRLQ3pacE95TXJuT0RrClVxaldtajlYYU05K2syWHJzcFEyUU9MLy9xcGdQZldmYnVIU012TjZOYUtzM0lYQkxaVnRuRDZEVTU3VlVMT3AKU0tSVHkvV0NScW52SFQ1dVJqN0JJWlNrQkx5VWo2T2RjVmVIMzhPMElLZ2VkcStiZ1NCeGgzS2ZJd1VJTVJGcwpmYUhwbG1JdkpFUHI3Uis5ZW5FYkh1T05jWlY0WHNJL1I5WmJyN1ExVmVpQ1JKczJqS1F1Y1J2SVhUOXBlenFRCkxMRW1DWGFDZmtGR05DUnNDR3JaZUhlVEx3M3hmZXR3ZDZyamUvMEkrYVlrRU9WSnl2V0FibW9LWjFCRHh1RHoKTFpQVFhQUHcwd012S0JUKzNWczRVL0lXSGNtSlZKZCtvZWdpCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRQzYxYno0RFoxemkxb2UKbUJFdkVxSmltcDRDR3FnRmJhVkZyRGNhNFNEa0VseThxYVUzWWV4Z2ZKc09HR0s3dTkxY0JIRkYvNmRrdGlQaQpmVDZQb3Ivb1ZHTlNvYlZqSElSQjBTRTIwdWtrczNLYTJBSnhydWxVWjJTL245YUJCYlcrUWRQRUU0YW93OFhnCnRHUjMxVVhQRUZXVml2V2Z6TVVnRklUdWpVK2xrVlNDbmgwR3c0L21aY3hRa1JwVHBDckdKUUN4ZDI3K0owQloKQkVPRmVsTlpPMHE2NDhpRWFpSTZkNWNMTzZIZmxMdHlheXBWeDRRaWNmNEpQY1FQQk94YkhtSHBhbm94cUMvMwpaZmUwYWh2VFBPdFV1dXFKYUM1V253ZlR3U1BEMUQ2TW02OVJkRDZhcGN3ZklVZnFFalB1VlhwRldQc2RWMngwCnVCcjlZNUhOQWdNQkFBRUNnZ0VBQWJqT2tRcXZGTTJIK3hnenNGZGZuOEVGQzhmckhJR3lNRDR5RTlGWFdFTEQKRUFvUU43NXpTMEJhdlhxRURtN2d6MlJMRnZZUU9PRmsyMFdFT2hhcDVoNUEvQlg1Y2Z4bFM2WDl4RitWUG4xWQo1UXh3bVZPZld1UEpEZXNQTXdrMmI1Wnp1UzdrNHRGTEZaTVVDZmF4T2dOUWhweE5QemZINlUvSEdkdTdqQzhTCm9yaTlJTjBiWWRpZWNZM2pvVXpWeDRiVGhMd1RaS2ZxaHNEWEpmWFpwYTgxT0grTzRyenBzdERJcENiT2lod3IKTDY5OG0zMXl5Tk00YWIwbGpSWFl4OUloNXE4VC8rL2NVZDZuYmxLZ2NDc0FDdVpmMWY4ejN4bVB0SXV2eDNOMgphbEVVeFB5RWhCSWlxRjJITzVERnp1Und3YXJBMjUwWUdsbWt1U001Z1FLQmdRRDZwUVRaLytWN1luZU1CSzhIClM4NDJseEVhdStoTC9JMVBuU3dpZDRmWUtYMDRBZmdoYUJ5U0k4cWJWNSthWDVyaFpyTGpmVlNmTEJyaEszNGUKaVM1TTJ3Z3lsU3FUM2tYay8vUDlnemlUWW12NUJqOWp0NTA1WTZVYVRRbHdPRXFFYmh6TGlNYnhTdTFtUm95VAozR3Nva0hnRWh1eHdib2JkdUYwZEpSWW1LUUtCZ1FDKzA3RVBmSmgzU2ttdGt2S0dxTEs5eDJkZ05pZXFVMFdFCnkxN3p5YldkU29HQkM2bkxiM1lSRFNXVmxWT3U4ODdyRDZ4SStYd2FRQllxQmNhNm5kUWpDQzB3cmJCYUJ5YlkKcE02cnlwbDVzWHBreVRnL2RQU01qbGV0NTV4d0dKTWJzalN1V2U3STB0WENCL2ptYzE5QndxSkZZV0wrcU9hMwpxUGRibTBxYkJRS0JnUURiMjRxUTZ4M1NDRUtUQ0x5N2FxeGRTRkFSb2tpVzl0YkJ3ajJua2pBUDFmem45eG8vCnU0SnNVb2J6a240R3ZOd3Y0WlVEWmJtbjBkbFdNSDkxcTZGNGV4MEt1YnZhYnp2aUx2NUlIeVd1YXNRSmNZaUQKSU5vQ01EendBQ2xLVGFaWDJmcmFNb1ZIdlJEWENRVmc0aFVCUlJCeDhDUlFUek53STd0UnlHbFFXUUtCZ0RXRwp6Y0NwVTE4S3NIWUdwUTdPblN5TWxWdXdkUm5hdDhKVEJYUmVuUm5jdjB6Q1I4TnZwVytNLzREZzNSTlRBalIvCk5mVldQZEJqTDVSa0FHVnlSZ0g1bGl0MFhPWXo0VnFkaC9jNklpaTNkcngwa05tRDVlRFRRSmJnUThwUnFsbjMKZDcxOExuV1laaXRCN3pnOUhuZ2tyejNFM203T1U4RXFuUS9PRkhROUFvR0JBTExaeC8zN0dmeVJUbXEzamgzYQp1cEJ0M25OaUNvL3dlUnJBS2Q1YTM5bEZVUDU5MXhMODVPQnZuWVlXcGRTQVpyU0FZZlBTZEN5ZE5vaFRxV3N6CjBzRVJyRXlNclNTaHZzZFRzcDNVeDJOaUJSd29oSjd4OXZIbmF5VVRybGJnMXdWNmI5S2ttMU8zbGI4WXpLNWQKbXYrYlRjVmROK0dGOFpXeXdaVUhvRWJzCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: faleover/ovs_lab2:keycloak
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secret
+                  key: password
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://postgres-service:5432/postgres"
+            - name: KC_DB_USERNAME
+              value: "postgres"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "false"
+            - name: KEYCLOAK_FRONTEND_URL
+              value: keycloak-service
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: keycloak-tls
+              mountPath: /etc/x509
+              readOnly: true
+          command:
+            [
+              "/opt/keycloak/bin/kc.sh",
+              "start",
+              "--https-certificate-file=/etc/x509/tls.crt",
+              "--https-certificate-key-file=/etc/x509/tls.key",
+              "--db-password=myHardPass007",
+            ]
+      volumes:
+        - name: keycloak-tls
+          secret:
+            secretName: keycloak-tls-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8443
+      targetPort: 8443
+  selector:
+    app: keycloak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-node-service
+spec:
+  selector:
+    app: keycloak
+  type: NodePort
+  ports:
+    - name: common
+      port: 8443
+      targetPort: 8443
+      nodePort: 31222
