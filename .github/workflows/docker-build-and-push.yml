@@ -1,5 +1,6 @@
 name: Inference Service Unit Testing and Build and Push Docker Image to Docker Hub
 
+
 on:
   push:
     branches:
